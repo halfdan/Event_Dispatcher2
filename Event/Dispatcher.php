@@ -36,15 +36,7 @@
 // +-----------------------------------------------------------------------+
 //
 
-require_once 'Event/Notification.php';
-
-/**
- * Pseudo 'static property' for Notification object
- * @global array $GLOBALS["_Event_Dispatcher"]
- */
-$GLOBALS['_Event_Dispatcher'] = array(
-    'NotificationClass' => 'Event_Notification'
-);
+require_once __DIR__ . '/Notification.php';
 
 /**
  * Registers a global observer
@@ -86,43 +78,37 @@ class Event_Dispatcher {
      * @var array
      * @access private
      */
-    private $_ro = array();
+    private $ro = array();
     /**
      * Pending notifications
      * @var array
      * @access private
      */
-    private $_pending = array();
+    private $pending = array();
     /**
      * Nested observers
      * @var array
      * @access private
      */
-    private $_nestedDispatchers = array();
+    private $nestedDispatchers = array();
     /**
      * Name of the dispatcher
      * @var string
      * @access private
      */
-    private $_name = null;
+    private $name = null;
     /**
      * Class used for notifications
      * @var string
      * @access private
      */
-    private $_notificationClass = null;
-
+    private static $notificationClassDefault = 'Event_Notification';
     /**
-     * PHP4 constructor
-     *
-     * Please use {@link getInstance()} instead.
-     *
-     * @access  private
-     * @param   string      Name of the notification dispatcher.
+     * Class used for notifications
+     * @var string
+     * @access private
      */
-    private function Event_Dispatcher($name) {
-        Event_Dispatcher::__construct($name);
-    }
+    private $notificationClass = null;
 
     /**
      * PHP5 constructor
@@ -133,8 +119,8 @@ class Event_Dispatcher {
      * @param   string      Name of the notification dispatcher.
      */
     private function __construct($name) {
-        $this->_name = $name;
-        $this->_notificationClass = $GLOBALS['_Event_Dispatcher']['NotificationClass'];
+        $this->name = $name;
+        $this->notificationClass = self::$notificationClassDefault;
     }
 
     /**
@@ -193,15 +179,15 @@ class Event_Dispatcher {
             $reg = $callback;
         }
 
-        $this->_ro[$nName][$reg] = array(
+        $this->ro[$nName][$reg] = array(
             'callback' => $callback,
             'class' => $class
         );
 
         // Post eventual pending notifications for this observer
-        if (isset($this->_pending[$nName])) {
-            foreach (array_keys($this->_pending[$nName]) as $k) {
-                $notification = & $this->_pending[$nName][$k];
+        if (isset($this->pending[$nName])) {
+            foreach (array_keys($this->pending[$nName]) as $k) {
+                $notification = & $this->pending[$nName][$k];
                 if (!$notification->isNotificationCancelled()) {
                     $objClass = get_class($notification->getNotificationObject());
                     if (empty($class) || strcasecmp($class, $objClass) == 0) {
@@ -239,7 +225,7 @@ class Event_Dispatcher {
      * @return  object  The notification object
      */
     public function post(&$object, $nName, $info = array(), $pending = true, $bubble = true) {
-        $notification = & new $this->_notificationClass($object, $nName, $info);
+        $notification = & new $this->notificationClass($object, $nName, $info);
         return $this->postNotification($notification, $pending, $bubble);
     }
 
@@ -261,9 +247,9 @@ class Event_Dispatcher {
         $objClass = get_class($notification->getNotificationObject());
 
         // Find the registered observers
-        if (isset($this->_ro[$nName])) {
-            foreach (array_keys($this->_ro[$nName]) as $k) {
-                $rObserver = & $this->_ro[$nName][$k];
+        if (isset($this->ro[$nName])) {
+            foreach (array_keys($this->ro[$nName]) as $k) {
+                $rObserver = & $this->ro[$nName][$k];
                 if ($notification->isNotificationCancelled()) {
                     return $notification;
                 }
@@ -276,9 +262,9 @@ class Event_Dispatcher {
         }
 
         // Notify globally registered observers
-        if (isset($this->_ro[EVENT_DISPATCHER_GLOBAL])) {
-            foreach (array_keys($this->_ro[EVENT_DISPATCHER_GLOBAL]) as $k) {
-                $rObserver = & $this->_ro[EVENT_DISPATCHER_GLOBAL][$k];
+        if (isset($this->ro[EVENT_DISPATCHER_GLOBAL])) {
+            foreach (array_keys($this->ro[EVENT_DISPATCHER_GLOBAL]) as $k) {
+                $rObserver = & $this->ro[EVENT_DISPATCHER_GLOBAL][$k];
                 if ($notification->isNotificationCancelled()) {
                     return $notification;
                 }
@@ -295,8 +281,8 @@ class Event_Dispatcher {
         }
 
         // Notify in nested dispatchers
-        foreach (array_keys($this->_nestedDispatchers) as $nested) {
-            $notification = & $this->_nestedDispatchers[$nested]->postNotification($notification, $pending);
+        foreach (array_keys($this->nestedDispatchers) as $nested) {
+            $notification = & $this->nestedDispatchers[$nested]->postNotification($notification, $pending);
         }
 
         return $notification;
@@ -323,20 +309,20 @@ class Event_Dispatcher {
         }
 
         $removed = false;
-        if (isset($this->_ro[$nName][$reg])) {
+        if (isset($this->ro[$nName][$reg])) {
             if (!empty($class)) {
-                if (strcasecmp($this->_ro[$nName][$reg]['class'], $class) == 0) {
-                    unset($this->_ro[$nName][$reg]);
+                if (strcasecmp($this->ro[$nName][$reg]['class'], $class) == 0) {
+                    unset($this->ro[$nName][$reg]);
                     $removed = true;
                 }
             } else {
-                unset($this->_ro[$nName][$reg]);
+                unset($this->ro[$nName][$reg]);
                 $removed = true;
             }
         }
 
-        if (isset($this->_ro[$nName]) && count($this->_ro[$nName]) == 0) {
-            unset($this->_ro[$nName]);
+        if (isset($this->ro[$nName]) && count($this->ro[$nName]) == 0) {
+            unset($this->ro[$nName]);
         }
         return $removed;
     }
@@ -362,13 +348,13 @@ class Event_Dispatcher {
             $reg = $callback;
         }
 
-        if (!isset($this->_ro[$nName][$reg])) {
+        if (!isset($this->ro[$nName][$reg])) {
             return false;
         }
         if (empty($class)) {
             return true;
         }
-        if (strcasecmp($this->_ro[$nName][$reg]['class'], $class) == 0) {
+        if (strcasecmp($this->ro[$nName][$reg]['class'], $class) == 0) {
             return true;
         }
         return false;
@@ -384,10 +370,10 @@ class Event_Dispatcher {
      */
     public function getObservers($nName = EVENT_DISPATCHER_GLOBAL, $class = null) {
         $observers = array();
-        if (!isset($this->_ro[$nName])) {
+        if (!isset($this->ro[$nName])) {
             return $observers;
         }
-        foreach ($this->_ro[$nName] as $reg => $observer) {
+        foreach ($this->ro[$nName] as $reg => $observer) {
             if ($class == null || $observer['class'] == null || strcasecmp($observer['class'], $class) == 0) {
                 $observers[] = $reg;
             }
@@ -404,7 +390,7 @@ class Event_Dispatcher {
      * @return   string     name of the dispatcher
      */
     public function getName() {
-        return $this->_name;
+        return $this->name;
     }
 
     /**
@@ -418,7 +404,7 @@ class Event_Dispatcher {
      */
     public function addNestedDispatcher(&$dispatcher) {
         $name = $dispatcher->getName();
-        $this->_nestedDispatchers[$name] = & $dispatcher;
+        $this->nestedDispatchers[$name] = & $dispatcher;
     }
 
     /**
@@ -432,10 +418,10 @@ class Event_Dispatcher {
         if (is_object($dispatcher)) {
             $dispatcher = $dispatcher->getName();
         }
-        if (!isset($this->_nestedDispatchers[$dispatcher])) {
+        if (!isset($this->nestedDispatchers[$dispatcher])) {
             return false;
         }
-        unset($this->_nestedDispatchers[$dispatcher]);
+        unset($this->nestedDispatchers[$dispatcher]);
         return true;
     }
 
@@ -451,12 +437,16 @@ class Event_Dispatcher {
      * @return   boolean
      */
     public function setNotificationClass($class) {
-        if (isset($this) && is_a($this, 'Event_Dispatcher')) {
-            $this->_notificationClass = $class;
-            return true;
-        }
-        $GLOBALS['_Event_Dispatcher']['NotificationClass'] = $class;
-        return true;
+        $this->notificationClass = $class;
+    }
+
+    /**
+     * Changes the default notification class.
+     *
+     * @param string $class name of the notification class
+     */
+    public static function setDefaultNotificationClass($class) {
+        self::$notificationClassDefault = $class;
     }
 
 }
