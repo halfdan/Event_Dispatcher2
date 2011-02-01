@@ -1,11 +1,11 @@
 <?PHP
 /**
- * example that show how to use objects as observers without
- * loosing references
+ * Example of Event_Dispatcher2 using a lambda function
+ * callback.
  *
- * @package    Event_Dispatcher
+ * @package    Event_Dispatcher2
  * @subpackage Examples
- * @author     Stephan Schmidt <schst@php.net>
+ * @author     Fabian Becker <halfdan@xnorfz.de>
  */
 
 /**
@@ -27,7 +27,7 @@ class Sender
 
     public function foo()
     {
-        $notification = $this->_dispatcher->post($this, 'onFoo', 'Some Info...');
+        $notification = &$this->_dispatcher->post($this, 'onFoo', 'Some Info...');
         echo "notification::foo is {$notification->foo}\n";
     }
 }
@@ -39,10 +39,10 @@ class Receiver
 {
     public $foo;
     
-    function notify($notification)
+    function notify(&$notification)
     {
-        echo "received notification\n";
-        echo "receiver::foo is {$this->foo}\n";
+        echo "Received notification\n";
+        echo "Receiver::foo is {$this->foo}\n";
         $notification->foo = 'bar';
     }
 }
@@ -53,11 +53,17 @@ $sender = new Sender($dispatcher);
 $receiver = new Receiver();
 $receiver->foo = 42;
 
+$lambda = function(&$notification) use ($receiver)
+{ 
+	echo "Function callback called!\n"; 
+	$receiver->notify(&$notification); 
+};
+
 // make sure you are using an ampersand here!
-$dispatcher->addObserver(array($receiver, 'notify'));
+$dispatcher->addObserver($lambda);
 
 $receiver->foo = 'bar';
 
-echo "sender->foo()\n";
+echo "Sender->foo()\n";
 $sender->foo();
 ?>

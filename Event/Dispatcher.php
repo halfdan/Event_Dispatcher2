@@ -167,7 +167,10 @@ class Event_Dispatcher {
      * @return void
      */
     public function addObserver($callback, $nName = EVENT_DISPATCHER_GLOBAL, $class = null) {
-        if (is_array($callback)) {
+        if (is_callable($callback)) {
+            // $callback is a lambda function
+            $reg = spl_object_hash($callback);
+        } elseif (is_array($callback)) {
             if (is_object($callback[0])) {
                 // Note : PHP4 does not allow correct object comparison so
                 // only the class name is used for registration checks.
