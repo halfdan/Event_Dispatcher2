@@ -242,7 +242,7 @@ class Event_Dispatcher {
     public function &postNotification(&$notification, $pending = true, $bubble = true) {
         $nName = $notification->getNotificationName();
         if ($pending === true) {
-            $this->_pending[$nName][] = & $notification;
+            $this->pending[$nName][] = & $notification;
         }
         $objClass = get_class($notification->getNotificationObject());
 
