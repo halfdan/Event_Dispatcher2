@@ -9,8 +9,10 @@
  * @package    Event_Dispatcher
  * @subpackage Tests
  */
+require_once 'PHPUnit/Framework/Assert.php';
+require_once 'PHPUnit/Framework/Test.php';
 require_once 'PHPUnit/Framework/TestCase.php';
-require_once 'Event/Dispatcher.php';
+require_once __DIR__ .'/../Event/Dispatcher.php';
 
 class Notified
 {
@@ -61,7 +63,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
 {
 
     // Get the default dispatch center
-    function test1()
+    public function test1()
     {
         $nf = new Notified();
         $dm = new Dummy();
@@ -115,7 +117,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
     }
 
     // Tests with 2 dispatchers
-    function test2()
+    public function test2()
     {
         $nf = new Notified();
         $dm = new Dummy();

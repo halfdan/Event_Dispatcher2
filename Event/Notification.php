@@ -45,7 +45,7 @@
  * information which can be anything you need.
  * 
  * @category   Event
- * @package    Event_Dispatcher
+ * @package    Event_Dispatcher2
  * @author     Bertrand Mansion <bmansion@mamasam.com>
  * @author     Stephan Schmidt <schst@php.net>
  * @copyright  1997-2005 The PHP Group
@@ -164,7 +164,7 @@ class Event_Notification {
      * @access   public
      * @return   void
      */
-    function cancelNotification() {
+    public function cancelNotification() {
         $this->_notificationState = Event_Notification::STATE_CANCELLED;
     }
 
