@@ -1,4 +1,5 @@
 <?php
+
 // +-----------------------------------------------------------------------+
 // | Copyright (c) 2005, Bertrand Mansion                                  |
 // | All rights reserved.                                                  |
@@ -31,9 +32,9 @@
 // +-----------------------------------------------------------------------+
 // | Author: Bertrand Mansion <bmansion@mamasam.com>                       |
 // |         Stephan Schmidt <schst@php.net>                               |
+// |         Fabian Becker <halfdan@xnorfz.de>                             |
 // +-----------------------------------------------------------------------+
 //
-// $Id: Dispatcher.php 284686 2009-07-24 05:22:17Z clockwerx $
 
 require_once 'Event/Notification.php';
 
@@ -42,8 +43,8 @@ require_once 'Event/Notification.php';
  * @global array $GLOBALS["_Event_Dispatcher"]
  */
 $GLOBALS['_Event_Dispatcher'] = array(
-                                  'NotificationClass' => 'Event_Notification'
-                                     );
+    'NotificationClass' => 'Event_Notification'
+);
 
 /**
  * Registers a global observer
@@ -72,47 +73,44 @@ define('EVENT_DISPATCHER_GLOBAL', '');
  * @package    Event_Dispatcher
  * @author     Bertrand Mansion <bmansion@mamasam.com>
  * @author     Stephan Schmidt <schst@php.net>
+ * @author     Fabian Becker <halfdan@xnorfz.de
  * @copyright  1997-2005 The PHP Group
  * @license    http://www.opensource.org/licenses/bsd-license.php BSD License
  * @version    Release: @package_version@
  * @link       http://pear.php.net/package/Event_Dispatcher
  */
-class Event_Dispatcher
-{
+class Event_Dispatcher {
+
     /**
      * Registered observer callbacks
      * @var array
      * @access private
      */
-    var $_ro = array();
-    
+    private $_ro = array();
     /**
      * Pending notifications
      * @var array
      * @access private
      */
-    var $_pending = array();
-
+    private $_pending = array();
     /**
      * Nested observers
      * @var array
      * @access private
      */
-    var $_nestedDispatchers = array();
-
+    private $_nestedDispatchers = array();
     /**
      * Name of the dispatcher
      * @var string
      * @access private
      */
-    var $_name = null;
-
+    private $_name = null;
     /**
      * Class used for notifications
      * @var string
      * @access private
      */
-    var $_notificationClass = null;
+    private $_notificationClass = null;
 
     /**
      * PHP4 constructor
@@ -122,8 +120,7 @@ class Event_Dispatcher
      * @access  private
      * @param   string      Name of the notification dispatcher.
      */
-    function Event_Dispatcher($name)
-    {
+    private function Event_Dispatcher($name) {
         Event_Dispatcher::__construct($name);
     }
 
@@ -135,8 +132,7 @@ class Event_Dispatcher
      * @access  private
      * @param   string      Name of the notification dispatcher.
      */
-    function __construct($name)
-    {
+    private function __construct($name) {
         $this->_name = $name;
         $this->_notificationClass = $GLOBALS['_Event_Dispatcher']['NotificationClass'];
     }
@@ -153,8 +149,7 @@ class Event_Dispatcher
      * 
      * @return object Event_Dispatcher
      */
-    function &getInstance($name = '__default')
-    {
+    public function getInstance($name = '__default') {
         static $dispatchers = array();
 
         if (!isset($dispatchers[$name])) {
@@ -185,29 +180,28 @@ class Event_Dispatcher
      * @param   string      Expected contained object class, serves as a filter
      * @return void
      */
-    function addObserver($callback, $nName = EVENT_DISPATCHER_GLOBAL, $class = null)
-    {
+    public function addObserver($callback, $nName = EVENT_DISPATCHER_GLOBAL, $class = null) {
         if (is_array($callback)) {
             if (is_object($callback[0])) {
                 // Note : PHP4 does not allow correct object comparison so
                 // only the class name is used for registration checks.
-                $reg = get_class($callback[0]).'::'.$callback[1];
+                $reg = get_class($callback[0]) . '::' . $callback[1];
             } else {
-                $reg = $callback[0].'::'.$callback[1];
+                $reg = $callback[0] . '::' . $callback[1];
             }
         } else {
             $reg = $callback;
         }
 
         $this->_ro[$nName][$reg] = array(
-                                    'callback' => $callback,
-                                    'class'    => $class
-                                    );
+            'callback' => $callback,
+            'class' => $class
+        );
 
         // Post eventual pending notifications for this observer
         if (isset($this->_pending[$nName])) {
             foreach (array_keys($this->_pending[$nName]) as $k) {
-                $notification =& $this->_pending[$nName][$k];
+                $notification = & $this->_pending[$nName][$k];
                 if (!$notification->isNotificationCancelled()) {
                     $objClass = get_class($notification->getNotificationObject());
                     if (empty($class) || strcasecmp($class, $objClass) == 0) {
@@ -244,9 +238,8 @@ class Event_Dispatcher
      * @param   bool        Whether you want the notification to bubble up
      * @return  object  The notification object
      */
-    function &post(&$object, $nName, $info = array(), $pending = true, $bubble = true)
-    {
-        $notification =& new $this->_notificationClass($object, $nName, $info);
+    public function post(&$object, $nName, $info = array(), $pending = true, $bubble = true) {
+        $notification = & new $this->_notificationClass($object, $nName, $info);
         return $this->postNotification($notification, $pending, $bubble);
     }
 
@@ -260,23 +253,22 @@ class Event_Dispatcher
      * @see Event_Dispatcher::post()
      * @return  object  The notification object
      */
-    function &postNotification(&$notification, $pending = true, $bubble = true)
-    {
+    public function &postNotification(&$notification, $pending = true, $bubble = true) {
         $nName = $notification->getNotificationName();
         if ($pending === true) {
-            $this->_pending[$nName][] =& $notification;
+            $this->_pending[$nName][] = & $notification;
         }
         $objClass = get_class($notification->getNotificationObject());
 
         // Find the registered observers
         if (isset($this->_ro[$nName])) {
             foreach (array_keys($this->_ro[$nName]) as $k) {
-                $rObserver =& $this->_ro[$nName][$k];
+                $rObserver = & $this->_ro[$nName][$k];
                 if ($notification->isNotificationCancelled()) {
                     return $notification;
                 }
                 if (empty($rObserver['class']) ||
-                	strcasecmp($rObserver['class'], $objClass) == 0) {
+                        strcasecmp($rObserver['class'], $objClass) == 0) {
                     call_user_func_array($rObserver['callback'], array(&$notification));
                     $notification->increaseNotificationCount();
                 }
@@ -286,12 +278,12 @@ class Event_Dispatcher
         // Notify globally registered observers
         if (isset($this->_ro[EVENT_DISPATCHER_GLOBAL])) {
             foreach (array_keys($this->_ro[EVENT_DISPATCHER_GLOBAL]) as $k) {
-                $rObserver =& $this->_ro[EVENT_DISPATCHER_GLOBAL][$k];
+                $rObserver = & $this->_ro[EVENT_DISPATCHER_GLOBAL][$k];
                 if ($notification->isNotificationCancelled()) {
                     return $notification;
                 }
-                if (empty($rObserver['class']) || 
-                	strcasecmp($rObserver['class'], $objClass) == 0) {
+                if (empty($rObserver['class']) ||
+                        strcasecmp($rObserver['class'], $objClass) == 0) {
                     call_user_func_array($rObserver['callback'], array(&$notification));
                     $notification->increaseNotificationCount();
                 }
@@ -301,10 +293,10 @@ class Event_Dispatcher
         if ($bubble === false) {
             return $notification;
         }
-        
+
         // Notify in nested dispatchers
         foreach (array_keys($this->_nestedDispatchers) as $nested) {
-            $notification =& $this->_nestedDispatchers[$nested]->postNotification($notification, $pending);
+            $notification = & $this->_nestedDispatchers[$nested]->postNotification($notification, $pending);
         }
 
         return $notification;
@@ -319,13 +311,12 @@ class Event_Dispatcher
      * @param   string      Contained object class
      * @return  bool    True if an observer was removed, false otherwise
      */
-    function removeObserver($callback, $nName = EVENT_DISPATCHER_GLOBAL, $class = null)
-    {
+    public function removeObserver($callback, $nName = EVENT_DISPATCHER_GLOBAL, $class = null) {
         if (is_array($callback)) {
             if (is_object($callback[0])) {
-                $reg = get_class($callback[0]).'::'.$callback[1];
+                $reg = get_class($callback[0]) . '::' . $callback[1];
             } else {
-                $reg = $callback[0].'::'.$callback[1];
+                $reg = $callback[0] . '::' . $callback[1];
             }
         } else {
             $reg = $callback;
@@ -350,23 +341,22 @@ class Event_Dispatcher
         return $removed;
     }
 
-   /**
-    * Check, whether the specified observer has been registered with the
-    * dispatcher
-    *
+    /**
+     * Check, whether the specified observer has been registered with the
+     * dispatcher
+     *
      * @access  public
      * @param   mixed       A PHP callback
      * @param   string      Notification name
      * @param   string      Contained object class
      * @return  bool        True if the observer has been registered, false otherwise
-    */
-    function observerRegistered($callback, $nName = EVENT_DISPATCHER_GLOBAL, $class = null)
-    {
+     */
+    public function observerRegistered($callback, $nName = EVENT_DISPATCHER_GLOBAL, $class = null) {
         if (is_array($callback)) {
             if (is_object($callback[0])) {
-                $reg = get_class($callback[0]).'::'.$callback[1];
+                $reg = get_class($callback[0]) . '::' . $callback[1];
             } else {
-                $reg = $callback[0].'::'.$callback[1];
+                $reg = $callback[0] . '::' . $callback[1];
             }
         } else {
             $reg = $callback;
@@ -384,28 +374,27 @@ class Event_Dispatcher
         return false;
     }
 
-   /**
-    * Get all observers, that have been registered for a notification
-    *
+    /**
+     * Get all observers, that have been registered for a notification
+     *
      * @access  public
      * @param   string      Notification name
      * @param   string      Contained object class
      * @return  array       List of all observers
-    */
-    function getObservers($nName = EVENT_DISPATCHER_GLOBAL, $class = null)
-    {
-        $observers = array();        
+     */
+    public function getObservers($nName = EVENT_DISPATCHER_GLOBAL, $class = null) {
+        $observers = array();
         if (!isset($this->_ro[$nName])) {
             return $observers;
         }
         foreach ($this->_ro[$nName] as $reg => $observer) {
-        	if ($class == null || $observer['class'] == null ||  strcasecmp($observer['class'], $class) == 0) {
-        		$observers[] = $reg;
-        	}
+            if ($class == null || $observer['class'] == null || strcasecmp($observer['class'], $class) == 0) {
+                $observers[] = $reg;
+            }
         }
         return $observers;
     }
-    
+
     /**
      * Get the name of the dispatcher.
      *
@@ -414,8 +403,7 @@ class Event_Dispatcher
      * @access   public
      * @return   string     name of the dispatcher
      */
-    function getName()
-    {
+    public function getName() {
         return $this->_name;
     }
 
@@ -428,21 +416,19 @@ class Event_Dispatcher
      * @access   public
      * @param    Event_Dispatcher    The nested dispatcher
      */
-    function addNestedDispatcher(&$dispatcher)
-    {
+    public function addNestedDispatcher(&$dispatcher) {
         $name = $dispatcher->getName();
-        $this->_nestedDispatchers[$name] =& $dispatcher;
+        $this->_nestedDispatchers[$name] = & $dispatcher;
     }
 
-   /**
-    * remove a nested dispatcher
-    *
-    * @access   public
-    * @param    Event_Dispatcher    Dispatcher to remove
-    * @return   boolean
-    */
-    function removeNestedDispatcher($dispatcher)
-    {
+    /**
+     * remove a nested dispatcher
+     *
+     * @access   public
+     * @param    Event_Dispatcher    Dispatcher to remove
+     * @return   boolean
+     */
+    public function removeNestedDispatcher($dispatcher) {
         if (is_object($dispatcher)) {
             $dispatcher = $dispatcher->getName();
         }
@@ -464,8 +450,7 @@ class Event_Dispatcher
      * @param    string     name of the notification class
      * @return   boolean
      */
-    function setNotificationClass($class)
-    {
+    public function setNotificationClass($class) {
         if (isset($this) && is_a($this, 'Event_Dispatcher')) {
             $this->_notificationClass = $class;
             return true;
@@ -475,4 +460,5 @@ class Event_Dispatcher
     }
 
 }
+
 ?>

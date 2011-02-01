@@ -1,4 +1,5 @@
 <?php
+
 // +-----------------------------------------------------------------------+
 // | Copyright (c) 2005, Bertrand Mansion                                  |
 // | All rights reserved.                                                  |
@@ -33,17 +34,6 @@
 // |         Stephan Schmidt <schst@php.net>                               |
 // +-----------------------------------------------------------------------+
 //
-// $Id: Notification.php 284686 2009-07-24 05:22:17Z clockwerx $
-
-/**
- * Default state of the notification
- */
-define('EVENT_NOTIFICATION_STATE_DEFAULT', 0);
-
-/**
- * Notification has been cancelled
- */
-define('EVENT_NOTIFICATION_STATE_CANCELLED', 1);
 
 /**
  * A Notification object
@@ -63,29 +53,35 @@ define('EVENT_NOTIFICATION_STATE_CANCELLED', 1);
  * @version    Release: @package_version@
  * @link       http://pear.php.net/package/Event_Dispatcher
  */
-class Event_Notification
-{
+class Event_Notification {
+    /**
+     * Default state of the notification
+     */
+    const STATE_DEFAULT = 0;
+
+    /**
+     * Notification has been cancelled
+     */
+    const STATE_CANCELLED = 1;
+
     /**
      * name of the notofication
      * @var string
      * @access private
      */
-    var $_notificationName;
-    
+    private $_notificationName;
     /**
      * object of interesed (the sender of the notification, in most cases)
      * @var object
      * @access private
      */
-    var $_notificationObject;
-    
+    private $_notificationObject;
     /**
      * additional information about the notification
      * @var mixed
      * @access private
      */
-    var $_notificationInfo = array();
-
+    private $_notificationInfo = array();
     /**
      * state of the notification
      *
@@ -96,14 +92,13 @@ class Event_Notification
      * @var integer
      * @access private
      */
-    var $_notificationState = EVENT_NOTIFICATION_STATE_DEFAULT;
-    
+    private $_notificationState = Event_Notification::STATE_DEFAULT;
     /**
      * amount of observers that received this notification
      * @var mixed
      * @access private
      */
-    var $_notificationCount = 0;
+    private $_notificationCount = 0;
 
     /**
      * Constructor
@@ -114,19 +109,17 @@ class Event_Notification
      * @param   string      Notification name
      * @param   array       Free information array
      */
-    function Event_Notification(&$object, $name, $info = array())
-    {
-        $this->_notificationObject =& $object;
-        $this->_notificationName   = $name;
-        $this->_notificationInfo   = $info;
+    public function __construct(&$object, $name, $info = array()) {
+        $this->_notificationObject = & $object;
+        $this->_notificationName = $name;
+        $this->_notificationInfo = $info;
     }
 
     /**
      * Returns the notification name
      * @return  string Notification name
      */
-    function getNotificationName()
-    {
+    public function getNotificationName() {
         return $this->_notificationName;
     }
 
@@ -134,8 +127,7 @@ class Event_Notification
      * Returns the contained object
      * @return  object Contained object
      */
-    function &getNotificationObject()
-    {
+    public function &getNotificationObject() {
         return $this->_notificationObject;
     }
 
@@ -143,52 +135,49 @@ class Event_Notification
      * Returns the user info array
      * @return  array user info
      */
-    function getNotificationInfo()
-    {
-        return $this->_notificationInfo;    
+    public function getNotificationInfo() {
+        return $this->_notificationInfo;
     }
 
-   /**
-    * Increase the internal count
-    *
-    * @access   public
-    */
-    function increaseNotificationCount()
-    {
+    /**
+     * Increase the internal count
+     *
+     * @access   public
+     */
+    public function increaseNotificationCount() {
         ++$this->_notificationCount;
     }
-    
-   /**
-    * Get the number of posted notifications
-    *
-    * @access   public
-    * @return   int
-    */
-    function getNotificationCount()
-    {
+
+    /**
+     * Get the number of posted notifications
+     *
+     * @access   public
+     * @return   int
+     */
+    public function getNotificationCount() {
         return $this->_notificationCount;
     }
-    
-   /**
-    * Cancel the notification
-    *
-    * @access   public
-    * @return   void
-    */
-    function cancelNotification()
-    {
-        $this->_notificationState = EVENT_NOTIFICATION_STATE_CANCELLED;
+
+    /**
+     * Cancel the notification
+     *
+     * @access   public
+     * @return   void
+     */
+    function cancelNotification() {
+        $this->_notificationState = Event_Notification::STATE_CANCELLED;
     }
 
-   /**
-    * Checks whether the notification has been cancelled
-    *
-    * @access   public
-    * @return   boolean
-    */
-    function isNotificationCancelled()
-    {
-        return ($this->_notificationState === EVENT_NOTIFICATION_STATE_CANCELLED);
+    /**
+     * Checks whether the notification has been cancelled
+     *
+     * @access   public
+     * @return   boolean
+     */
+    public function isNotificationCancelled() {
+        return ($this->_notificationState === Event_Notification::STATE_CANCELLED);
     }
+
 }
+
 ?>
